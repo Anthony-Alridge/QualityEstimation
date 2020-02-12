@@ -67,9 +67,9 @@ def get_labels_and_data(type='train'):
 
     # lines_de = get_embeddings('../data/en-de/' + type + '.ende.mt',nlp_de,'de')
 
-    f = open('../data/en-de/' + type + '.ende.scores', encoding='utf-8') # Open file on read mode
-    scores = f.read().split("\n") # Create a list containing all lines
-    f.close() # Close file
+    # f = open('../data/en-de/' + type + '.ende.scores', encoding='utf-8') # Open file on read mode
+    # scores = f.read().split("\n") # Create a list containing all lines
+    # f.close() # Close file
 
     tokeniser = ppb.BertTokenizer.from_pretrained('bert-base-multilingual-cased')
 
@@ -81,76 +81,24 @@ def get_labels_and_data(type='train'):
     data_tensor = torch.LongTensor(datas)
 
 
+    return data_tensor
 
-    scores_ls = []
-    for s in scores:
-      if s is None or s is '':break
-      scores_ls.append(float(s))
 
-    labels = torch.FloatTensor(scores_ls)
-    return data_tensor, labels
-
-data_tensor, labels = get_labels_and_data('train')
-# f = open( "data_tensor.pkl", "rb" )
-# data_tensor = pickle.load(f)
-# pickle.dump(data_tensor,f)
-# f = open( "labels.pkl", "rb" )
-# labels = pickle.load(f)
-
-# pickle.dump(labels,f)
-# print(data_tensor)
-# print(data_tensor.shape)
-my_dataset = data.TensorDataset(data_tensor.cuda(),labels.cuda()) # create your datset#
-my_dataloader = data.DataLoader(my_dataset,batch_size=2,shuffle=True)
-
-# model = ppb.BertForSequenceClassification.from_pretrained('bert-base-multilingual-cased')
-# model.config.num_labels = 1
-model = Rishinet(500000,10,768)
-model.to('cuda')
-#
 bert = ppb.BertModel.from_pretrained('bert-base-multilingual-cased')
 bert.cuda()
-epochs=3
-device=torch.device('cuda')
-dtype = torch.long
-print_every = 100
-optimizer = optim.Adam(model.parameters(),lr=0.0001)
-for e in range(epochs):
-        for t, (x, y) in enumerate(my_dataloader):
-            # print(y)
-            model.train()  # put model to training mode
-            x = x.to(device=device, dtype=dtype)  # move to device, e.g. GPU
-            y = y.to(device=device, dtype=torch.float32)
-            # print(x.shape)
-            # print(x.dtype)
-            x = bert(x)[1]
 
-            outputs = model(x)
-            criterion = nn.MSELoss()
-            loss = torch.sqrt(criterion(torch.flatten(outputs), y))
-            # print(outputs)
-            # Zero out all of the gradients for the variables which the optimizer
-            # will update.
-            optimizer.zero_grad()
-
-            loss.backward()
-
-            # Update the parameters of the model using the gradients
-            optimizer.step()
-
-            if t % print_every == 0:
-                print('Epoch: %d, Iteration %d, loss = %.4f' % (e, t, loss.item()))
-                #check_accuracy(loader_val, model)
-                print()
-f = open('model2.pkl','wb')
-pickle.dump(model, f)
-# test_tensor , test_labels = get_labels_and_data('dev')
-# my_dataset = data.TensorDataset(test_tensor.cuda(),test_labels.cuda()) # create your datset#
-# my_dataloader = data.DataLoader(my_dataset,batch_size=2,shuffle=True)
-# x = bert(test_tensor.cuda())[1]
-# out = model(x)
-#
+f = open('model.pkl','rb')
+model = pickle.load(f)
+test_tensor = get_labels_and_data('test')
+my_dataset = data.TensorDataset(test_tensor.cuda()) # create your datset#
+my_dataloader = data.DataLoader(my_dataset,batch_size=1)
+outs = []
+for t, x in enumerate(my_dataloader):
+    x = bert(x[0])[1]
+    out = model(x)
+    outs.append(out[:2][0].cpu().detach().numpy()[0])
 # criterion = nn.MSELoss()
 # loss = torch.sqrt(criterion(out[:2][0], test_labels.cuda()))
-# print("Acc on test")
-# print(loss)
+with open('predictions.txt', 'w') as f:
+    for item in outs:
+        f.write("%s\n" % item)

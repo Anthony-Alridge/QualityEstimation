@@ -3,7 +3,7 @@ import transformers as ppb
 from torch.utils import data
 from torch import nn
 from torch import optim
-from models.neuralnet import Rishinet
+from models.neuralnet import Rishinet2
 import pickle
 
 import spacy
@@ -73,12 +73,16 @@ def get_labels_and_data(type='train'):
 
     tokeniser = ppb.BertTokenizer.from_pretrained('bert-base-multilingual-cased')
 
-    datas = []
+    datas1 = []
     for i,j in zip(lines_en, lines_de):
       if i is '':break
-      datas.append(tokeniser.encode(i,text_pair=j,truncation_strategy='do_not_truncate',pad_to_max_length=True))
+      datas1.append([tokeniser.encode(i,pad_to_max_length=True),tokeniser.encode(j,pad_to_max_length=True)])
       # datas.append([i,j])
+    datas = []
+    for d in datas1:
+        datas.append(d[0] + d[1])
     data_tensor = torch.LongTensor(datas)
+    print(data_tensor.shape)
 
 
 
@@ -91,46 +95,45 @@ def get_labels_and_data(type='train'):
     return data_tensor, labels
 
 data_tensor, labels = get_labels_and_data('train')
-# f = open( "data_tensor.pkl", "rb" )
-# data_tensor = pickle.load(f)
-# pickle.dump(data_tensor,f)
-# f = open( "labels.pkl", "rb" )
-# labels = pickle.load(f)
 
-# pickle.dump(labels,f)
-# print(data_tensor)
-# print(data_tensor.shape)
+# min_v = torch.min(labels)
+# range_v = torch.max(labels) - min_v
+# if range_v > 0:
+#     normalised = (labels - min_v) / range_v
+# else:
+#     normalised = torch.zeros(labels.size())
 my_dataset = data.TensorDataset(data_tensor.cuda(),labels.cuda()) # create your datset#
-my_dataloader = data.DataLoader(my_dataset,batch_size=2,shuffle=True)
+my_dataloader = data.DataLoader(my_dataset,batch_size=32,shuffle=True)
 
-# model = ppb.BertForSequenceClassification.from_pretrained('bert-base-multilingual-cased')
-# model.config.num_labels = 1
-model = Rishinet(500000,10,768)
+model = Rishinet2(500000,200,2)
 model.to('cuda')
-#
-bert = ppb.BertModel.from_pretrained('bert-base-multilingual-cased')
-bert.cuda()
-epochs=3
+epochs=10
 device=torch.device('cuda')
 dtype = torch.long
 print_every = 100
-optimizer = optim.Adam(model.parameters(),lr=0.0001)
+optimizer = optim.Adagrad(model.parameters(),lr=0.0001)
+test_tensor , test_labels = get_labels_and_data('dev')
+
 for e in range(epochs):
         for t, (x, y) in enumerate(my_dataloader):
             # print(y)
             model.train()  # put model to training mode
             x = x.to(device=device, dtype=dtype)  # move to device, e.g. GPU
-            y = y.to(device=device, dtype=torch.float32)
-            # print(x.shape)
-            # print(x.dtype)
-            x = bert(x)[1]
+            y = y.to(device=device, dtype=torch.float)
 
             outputs = model(x)
             criterion = nn.MSELoss()
-            loss = torch.sqrt(criterion(torch.flatten(outputs), y))
-            # print(outputs)
-            # Zero out all of the gradients for the variables which the optimizer
-            # will update.
+            # print(x.shape)
+            # print(outputs[:2][0].shape)
+            # print(y.shape)
+            loss = criterion(torch.flatten(outputs), y)
+
+            # ey_t = torch.flatten(outputs) - y
+            # loss =  torch.mean(torch.log(torch.cosh(ey_t + 1e-12)))
+            # print("new")
+            # print(torch.flatten(outputs))
+            # print(y)
+
             optimizer.zero_grad()
 
             loss.backward()
@@ -142,15 +145,25 @@ for e in range(epochs):
                 print('Epoch: %d, Iteration %d, loss = %.4f' % (e, t, loss.item()))
                 #check_accuracy(loader_val, model)
                 print()
-f = open('model2.pkl','wb')
-pickle.dump(model, f)
-# test_tensor , test_labels = get_labels_and_data('dev')
-# my_dataset = data.TensorDataset(test_tensor.cuda(),test_labels.cuda()) # create your datset#
-# my_dataloader = data.DataLoader(my_dataset,batch_size=2,shuffle=True)
-# x = bert(test_tensor.cuda())[1]
-# out = model(x)
-#
-# criterion = nn.MSELoss()
-# loss = torch.sqrt(criterion(out[:2][0], test_labels.cuda()))
-# print("Acc on test")
-# print(loss)
+
+        with torch.no_grad():
+            print("validation")
+            out = model(test_tensor.cuda())
+            criterion = nn.MSELoss()
+            lossout = torch.sqrt(criterion(torch.flatten(out), test_labels.cuda()))
+            print(lossout)
+# f = open('model2.pkl','wb')
+# pickle.load(model, f)
+# print(out)
+print("finished")
+out = model(test_tensor.cuda())
+
+criterion = nn.MSELoss()
+# unnormalised = torch.flatten(out) * range_v + min_v
+# print(out.shape)
+# print(unnormalised)
+# print(test_labels)
+# test_labels = (test_labels - min_v) / range_v
+lossout = torch.sqrt(criterion(torch.flatten(out), test_labels.cuda()))
+print("Acc on test")
+print(lossout)
