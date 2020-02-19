@@ -3,7 +3,7 @@ import transformers as ppb
 from torch.utils import data
 from torch import nn
 from torch import optim
-from models.neuralnet import Rishinet3
+from neuralnet import Rishinet3
 import pickle
 
 import numpy as np
@@ -65,7 +65,7 @@ def test(model,dataloader):
             y = y.to(device=device, dtype=torch.float)
             y = y.view(-1, 1)
             outputs = model(x)
-            criterion = nn.MSELoss()
+            criterion = loss_func
             loss = criterion(outputs, y)
             print(loss)
             running_mse += loss.cpu().detach().numpy() * len(x)
@@ -82,13 +82,13 @@ test_tensor , test_labels = get_labels_and_data('dev')
 my_dataset = data.TensorDataset(data_tensor.cuda(),labels.cuda()) # create your datset#
 my_dataloader = data.DataLoader(my_dataset,batch_size=32,shuffle=True)
 
-model = Rishinet3(500000,128)
+model = Rishinet3(500000,40)
 model.to('cuda')
 epochs=20
 device=torch.device('cuda')
 dtype = torch.long
 print_every = 100
-optimizer = optim.Adam(model.parameters(),lr=0.00000001)
+optimizer = optim.Adam(model.parameters(),lr=0.0001)
 
 test_dataset = data.TensorDataset(test_tensor.cuda(),test_labels.cuda()) # create your datset#
 test_dataloader = data.DataLoader(test_dataset,batch_size=32,shuffle=True)

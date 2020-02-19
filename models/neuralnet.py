@@ -52,15 +52,19 @@ class Rishinet3(nn.Module):
         self.convE1 = nn.Conv2d(1,5,5)
         self.maxE1 = nn.MaxPool2d(2)
         self.convE2 = nn.Conv2d(5,7,5)
+        self.maxE2 = nn.MaxPool2d(2)
+        self.convE3 = nn.Conv2d(7,9,3)
 
         self.embeddingsG = nn.Embedding(vocab_size, embedding_dim)
         self.convG1 = nn.Conv2d(1, 5, 5)
         self.maxG1 = nn.MaxPool2d(2)
         self.convG2 = nn.Conv2d(5, 7, 5)
+        self.maxG2 = nn.MaxPool2d(2)
+        self.convG3 = nn.Conv2d(7,9,3)
 
         self.maxPool = nn.MaxPool2d(2)
 
-        self.linear1 = nn.Linear(50750, 300)
+        self.linear1 = nn.Linear(2196, 300)
         self.linear2 = nn.Linear(300, 1)
 
     def forward(self, inputs):
@@ -70,11 +74,15 @@ class Rishinet3(nn.Module):
         outE = self.convE1(embE)
         outE = self.maxE1(outE)
         outE = self.convE2(outE)
+        outE = self.maxE2(outE)
+        outE = self.convE3(outE)
 
         embG = self.embeddingsG(inputs[:,1:,:])
         outG = self.convG1(embE)
         outG = self.maxG1(outG)
         outG = self.convG2(outG)
+        outG = self.maxG2(outG)
+        outG = self.convG3(outG)
 
         out =  torch.cat([outE,outG],1)
 
