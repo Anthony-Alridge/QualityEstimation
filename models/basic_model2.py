@@ -103,7 +103,7 @@ data_tensor, labels = get_labels_and_data('train')
 # else:
 #     normalised = torch.zeros(labels.size())
 my_dataset = data.TensorDataset(data_tensor.cuda(),labels.cuda()) # create your datset#
-my_dataloader = data.DataLoader(my_dataset,batch_size=32,shuffle=True)
+my_dataloader = data.DataLoader(my_dataset,batch_size=16,shuffle=True)
 
 model = Rishinet2(500000,200,2)
 model.to('cuda')
@@ -116,17 +116,16 @@ test_tensor , test_labels = get_labels_and_data('dev')
 
 for e in range(epochs):
         for t, (x, y) in enumerate(my_dataloader):
-            # print(y)
             model.train()  # put model to training mode
             x = x.to(device=device, dtype=dtype)  # move to device, e.g. GPU
             y = y.to(device=device, dtype=torch.float)
-
+            y = y.view(-1,1)
             outputs = model(x)
             criterion = nn.MSELoss()
             # print(x.shape)
             # print(outputs[:2][0].shape)
             # print(y.shape)
-            loss = criterion(torch.flatten(outputs), y)
+            loss = criterion(outputs, y)
 
             # ey_t = torch.flatten(outputs) - y
             # loss =  torch.mean(torch.log(torch.cosh(ey_t + 1e-12)))
@@ -147,17 +146,20 @@ for e in range(epochs):
                 print()
 
         with torch.no_grad():
+            model.eval()
             print("validation")
+            model.to("cuda")
             out = model(test_tensor.cuda())
             criterion = nn.MSELoss()
-            lossout = torch.sqrt(criterion(torch.flatten(out), test_labels.cuda()))
+            lossout = torch.sqrt(criterion(out, test_labels.view(-1,1).cuda()))
             print(lossout)
 # f = open('model2.pkl','wb')
 # pickle.load(model, f)
 # print(out)
 print("finished")
 out = model(test_tensor.cuda())
-
+print(out)
+print(out.shape)
 criterion = nn.MSELoss()
 # unnormalised = torch.flatten(out) * range_v + min_v
 # print(out.shape)
