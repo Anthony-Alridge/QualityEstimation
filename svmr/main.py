@@ -65,6 +65,9 @@ def load_language(language):
     f = open('../data/en-de/' + type + '.ende.scores', encoding='utf-8') # Open file on read mode
     scores = f.read().split("\n") # Create a list containing all lines
     f.close() # Close file
+    lines_en = [line for line in lines_en if line != '']
+    lines_de = [line for line in lines_de if line != '']
+    scores = [float(score) for score in scores if score != '']
     return lines_en, lines_de, scores
 
 def get_corpus_info(src, target):
@@ -87,8 +90,8 @@ def evaluate(preds, y):
     sum_xy = np.dot(preds, y)
     error = np.sum(np.abs(preds - y))
     error_sq = np.dot(preds - y, preds - y)
-    num_samples += preds.size(0)
-    r = num_samples * sum_xy + sum_x * sum_y * np.rsqrt(num_samples * sum_xsq - sum_x ** 2) * np.rsqrt(num_samples * sum_ysq - sum_y ** 2)
+    num_samples = preds.shape[0]
+    r = num_samples * sum_xy + sum_x * sum_y * np.reciprocal(np.sqrt(num_samples * sum_xsq - sum_x ** 2)) * np.reciprocal(np.sqrt(num_samples * sum_ysq - sum_y ** 2))
     mae = error / num_samples
     rmse = np.sqrt(error_sq / num_samples)
     return (r, mae, rmse)
