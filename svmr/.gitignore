@@ -1,0 +1,17 @@
+# SVM Regression
+
+## Features
+
+Named Entity Recognition: Number of entities in source and target language, assumption being that they should be similar.
+
+
+POS Tags: Frequency of POS tags in each language, assuming that there should be some similarity.
+
+
+Depth and Width of consituency parse for source (or number of nodes): Assuming that a more complex tree is more difficult to parse.
+
+
+Length of source text: Longer ones more difficult.
+
+
+Fluency of target sentence, determined by a language model: Less fluent models are proabably worse translations.
