@@ -94,63 +94,60 @@ def validate(model,dataloader):
         print("pearson is " + str(pearson_out))
 
 
-# data_tensor, labels = get_labels_and_data('train')
 test_tensor , test_labels = get_labels_and_data('dev')
-
-
-# my_dataset = data.TensorDataset(torch.cat([data_tensor],0).cuda(),torch.cat([labels]).cuda()) # create your datset#
-# my_dataloader = data.DataLoader(my_dataset,batch_size=16,shuffle=True)
-
 distilbert = ppb.DistilBertModel.from_pretrained('distilbert-base-multilingual-cased')
 distilbert.to('cuda')
 device=torch.device('cuda')
 dtype = torch.long
 
-# embeddings = []
-# labels = []
-#
-# for t, (x, y) in enumerate(my_dataloader):
-#     x = x.to(device=device, dtype=dtype).squeeze(1)
-#     print(x.shape)
-#     outputs = distilbert(x)[0]
-#     for output in outputs:
-#         embeddings.append(output.cpu().detach().numpy())
-#     for l in y:
-#         labels.append(l.cpu().detach().numpy())
+def encode():
+    data_tensor, labels = get_labels_and_data('train')
+
+    my_dataset = data.TensorDataset(torch.cat([data_tensor],0).cuda(),torch.cat([labels]).cuda()) # create your datset#
+    my_dataloader = data.DataLoader(my_dataset,batch_size=16,shuffle=True)
 
 
-# f = open("bert_embeddings.pkl",'rb')
-# embeddings = np.array(pickle.load(f))
-#
-# f = open("bert_labels.pkl",'rb')
-# labels = np.array(pickle.load(f))
-#
-# # labels = [label[0] for label in labels]
-# print(embeddings.shape)
-#
-# model = svm.SVR(verbose=True, max_iter=10000,cache_size=100000)
-# # model = tree.DecisionTreeRegressor()
-# # model = linear_model.BayesianRidge()
-# model.fit(embeddings.reshape(7000,100*768),labels)
-#
-# f = open("bert_model_svr.pkl",'wb')
-# pickle.dump(model,f)
+    embeddings = []
+    labels = []
+
+    for t, (x, y) in enumerate(my_dataloader):
+        x = x.to(device=device, dtype=dtype).squeeze(1)
+        print(x.shape)
+        outputs = distilbert(x)[0]
+        for output in outputs:
+            embeddings.append(output.cpu().detach().numpy())
+        for l in y:
+            labels.append(l.cpu().detach().numpy())
+    f = open("bert_embeddings.pkl", 'wb')
+    pickle.dump(embeddings,f)
+
+    f = open("bert_labels.pkl", 'wb')
+    pickle.dump(labels,f)
+
+
+def train_model():
+
+
+    f = open("bert_embeddings.pkl",'rb')
+    embeddings = np.array(pickle.load(f))
+
+    f = open("bert_labels.pkl",'rb')
+    labels = np.array(pickle.load(f))
+
+    # labels = [label[0] for label in labels]
+    print(embeddings.shape)
+
+    model = svm.SVR(verbose=True, max_iter=10000,cache_size=100000)
+    # model = tree.DecisionTreeRegressor()
+    # model = linear_model.BayesianRidge()
+    model.fit(embeddings.reshape(7000,100*768),labels)
+
+    f = open("bert_model_svr.pkl",'wb')
+    pickle.dump(model,f)
 
 
 f = open("bert_model_svr.pkl",'rb')
 model = pickle.load(f)
-
-# test_dataset = data.TensorDataset(test_tensor.cuda(),test_labels.cuda()) # create your datset#
-# test_dataloader = data.DataLoader(test_dataset,batch_size=16,shuffle=True)
-#
-#
-# for t, (x,y) in enumerate(test_dataloader):
-#     x = x.to(device=device, dtype=dtype).squeeze(1)
-#     outputs = distilbert(x)[0]
-#     outputs = outputs.cpu().reshape(len(x),100 *768).detach().numpy()
-#     y_pred = model.predict(outputs)
-#     for (i,j) in zip(y_pred,y):
-#         print(str(i) + ", " + str(j))
 
 test_tensor = get_labels_and_data('test')
 my_dataset = data.TensorDataset(test_tensor.cuda()) # create your datset#
