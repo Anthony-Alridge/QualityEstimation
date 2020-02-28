@@ -97,8 +97,6 @@ for t, x in enumerate(my_dataloader):
     x = bert(x[0])[1]
     out = model(x)
     outs.append(out[:2][0].cpu().detach().numpy()[0])
-# criterion = nn.MSELoss()
-# loss = torch.sqrt(criterion(out[:2][0], test_labels.cuda()))
 with open('predictions.txt', 'w') as f:
     for item in outs:
         f.write("%s\n" % item)

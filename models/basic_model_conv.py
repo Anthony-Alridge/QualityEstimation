@@ -88,13 +88,13 @@ def get_labels_and_data(type='train'):
         scores = f.read().split("\n") # Create a list containing all lines
         f.close() # Close file
 
-    # tokeniser = ppb.BertTokenizer.from_pretrained('bert-base-multilingual-cased')
+    tokeniser = ppb.BertTokenizer.from_pretrained('bert-base-multilingual-cased')
 
     datas = []
     for i,j in zip(lines_en, lines_de):
       if i is '':break
-      datas.append([i,j])
-      # datas.append([tokeniser.encode(i,max_length=100,pad_to_max_length=True),tokeniser.encode(j,max_length=100,pad_to_max_length=True)])
+      # datas.append([i,j])
+      datas.append([tokeniser.encode(i,max_length=100,pad_to_max_length=True),tokeniser.encode(j,max_length=100,pad_to_max_length=True)])
 
     data_tensor = torch.Tensor(datas)
 

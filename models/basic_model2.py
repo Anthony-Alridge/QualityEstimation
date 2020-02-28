@@ -96,12 +96,6 @@ def get_labels_and_data(type='train'):
 
 data_tensor, labels = get_labels_and_data('train')
 
-# min_v = torch.min(labels)
-# range_v = torch.max(labels) - min_v
-# if range_v > 0:
-#     normalised = (labels - min_v) / range_v
-# else:
-#     normalised = torch.zeros(labels.size())
 my_dataset = data.TensorDataset(data_tensor.cuda(),labels.cuda()) # create your datset#
 my_dataloader = data.DataLoader(my_dataset,batch_size=16,shuffle=True)
 
@@ -122,17 +116,7 @@ for e in range(epochs):
             y = y.view(-1,1)
             outputs = model(x)
             criterion = nn.MSELoss()
-            # print(x.shape)
-            # print(outputs[:2][0].shape)
-            # print(y.shape)
             loss = criterion(outputs, y)
-
-            # ey_t = torch.flatten(outputs) - y
-            # loss =  torch.mean(torch.log(torch.cosh(ey_t + 1e-12)))
-            # print("new")
-            # print(torch.flatten(outputs))
-            # print(y)
-
             optimizer.zero_grad()
 
             loss.backward()
@@ -153,19 +137,11 @@ for e in range(epochs):
             criterion = nn.MSELoss()
             lossout = torch.sqrt(criterion(out, test_labels.view(-1,1).cuda()))
             print(lossout)
-# f = open('model2.pkl','wb')
-# pickle.load(model, f)
-# print(out)
 print("finished")
 out = model(test_tensor.cuda())
 print(out)
 print(out.shape)
 criterion = nn.MSELoss()
-# unnormalised = torch.flatten(out) * range_v + min_v
-# print(out.shape)
-# print(unnormalised)
-# print(test_labels)
-# test_labels = (test_labels - min_v) / range_v
 lossout = torch.sqrt(criterion(torch.flatten(out), test_labels.cuda()))
 print("Acc on test")
 print(lossout)
