@@ -5,24 +5,16 @@ import torch.optim as optim
 
 class Rishinet(nn.Module):
 
-    def __init__(self, vocab_size, embedding_dim, hidden_dim):
+    def __init__(self, hidden_dim1, hidden_dim2):
         super(Rishinet, self).__init__()
-        # self.embeddings = nn.Embedding(vocab_size, embedding_dim)
-        # self.lstm1 = nn.LSTM(300, hidden_dim, bidirectional=True)
-        self.linear1 = nn.Linear(hidden_dim , 1)
+        self.linear1 = nn.Linear(hidden_dim1,hidden_dim2)
+        self.linear2 = nn.Linear(hidden_dim2 , 1)
 
-        # self.lstm2 = nn.LSTM(300, hidden_dim, bidirectional=True)
-        # self.linear2 = nn.Linear(hidden_dim * 2, 1)
 
     def forward(self, inputs):
-        # print(inputs[:,:,:1])
-        # out1, _ = self.lstm1(inputs[:,:1,:])
-        # print(inputs.shape)
-        out1 = F.tanh(self.linear1(inputs))
-
-        # out2, _ = self.lstm2(inputs[:,1:,:])
-        # out2 = self.linear2(out2)
-        return out1
+        out = F.tanh(self.linear1(inputs))
+        out = F.tanh(self.linear2(out))
+        return out
 
 class Rishinet2(nn.Module):
 
@@ -32,11 +24,8 @@ class Rishinet2(nn.Module):
         self.lstm1 = nn.LSTM(embedding_dim , hidden_dim, num_layers=3, bidirectional=False,dropout=0.5,batch_first=True)
         self.linear1 = nn.Linear(1024 * hidden_dim , 50)
         self.linear2 = nn.Linear(50, 1)
-        # self.lstm2 = nn.LSTM(300, hidden_dim, bidirectional=True)
-        # self.linear2 = nn.Linear(hidden_dim * 2, 1)
 
     def forward(self, inputs):
-        # print(inputs[:,:,:1])
         emb = self.embeddings(inputs)
         out1, _ = self.lstm1(emb)
         out1 = F.tanh(out1.reshape(len(inputs),-1))
