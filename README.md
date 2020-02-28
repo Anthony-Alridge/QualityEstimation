@@ -12,4 +12,4 @@ See /fine-tuning for models based on fine-tuning. Note that these are Python
 notebooks.
 
 
-The best performing model can be found in [TODO: please fill in]
+The best performing model can be found in models/model_rob_svm.py
