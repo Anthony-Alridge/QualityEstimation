@@ -16,6 +16,8 @@ python -m spacy download de_core_news_sm
 
 ## Running the model
 Run python main.py --data [path_to_data_directory]
+
+
 main.py accepts a language argument but the code does not currently support this.
 It will default to German and does not support Chinese, so this argument should
 be ignored.
